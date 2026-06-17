@@ -27,17 +27,23 @@ const syncButton = document.getElementById("syncButton");
 const syncPanel = document.getElementById("syncPanel");
 const syncForm = document.getElementById("syncForm");
 const syncStatus = document.getElementById("syncStatus");
+const cancelCodeInput = document.getElementById("cancelCode");
+const newCancelCodeButton = document.getElementById("newCancelCode");
 
 document.getElementById("date").valueAsDate = new Date();
 document.getElementById("startTime").value = "09:00";
 document.getElementById("endTime").value = "10:00";
 document.getElementById("supabaseUrl").value = state.config.supabaseUrl || "";
 document.getElementById("supabaseKey").value = state.config.supabaseKey || "";
+cancelCodeInput.value = generateCancelCode();
 
 document.getElementById("prevPeriod").addEventListener("click", () => movePeriod(-1));
 document.getElementById("nextPeriod").addEventListener("click", () => movePeriod(1));
 syncButton.addEventListener("click", () => syncPanel.classList.toggle("open"));
 syncForm.addEventListener("submit", saveDatabaseConfig);
+newCancelCodeButton.addEventListener("click", () => {
+  cancelCodeInput.value = generateCancelCode();
+});
 
 document.querySelectorAll("[data-view]").forEach((button) => {
   button.addEventListener("click", () => {
@@ -99,7 +105,8 @@ form.addEventListener("submit", async (event) => {
   document.getElementById("date").value = data.date;
   document.getElementById("startTime").value = data.endTime;
   document.getElementById("endTime").value = addMinutes(data.endTime, 60);
-  showMessage("Reserva criada com sucesso.", true);
+  cancelCodeInput.value = generateCancelCode();
+  showMessage(`Reserva criada. Guarde o codigo: ${cancelCode}`, true);
   await refreshBookings();
 });
 
@@ -486,6 +493,14 @@ function forgetCancelCode(id) {
   const codes = getCancelCodeMap();
   delete codes[id];
   localStorage.setItem(CANCEL_CODES_KEY, JSON.stringify(codes));
+}
+
+function generateCancelCode() {
+  const values = new Uint32Array(2);
+  crypto.getRandomValues(values);
+  const first = String(values[0] % 1000).padStart(3, "0");
+  const second = String(values[1] % 1000).padStart(3, "0");
+  return `${first}-${second}`;
 }
 
 function movePeriod(direction) {

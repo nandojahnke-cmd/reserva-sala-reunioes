@@ -303,6 +303,23 @@ input:focus {
   gap: 10px;
 }
 
+.code-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.secondary-button {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--green-700);
+  border-radius: 7px;
+  background: var(--white);
+  color: var(--green-900);
+  cursor: pointer;
+  font-weight: 800;
+}
+
 .form-message {
   min-height: 20px;
   margin: 0;
@@ -556,6 +573,7 @@ input:focus {
   }
 
   .time-grid,
+  .code-row,
   .metric-strip {
     grid-template-columns: 1fr;
   }

@@ -90,7 +90,10 @@
             </div>
             <label>
               Código de cancelamento
-              <input id="cancelCode" name="cancelCode" type="password" minlength="4" placeholder="Mínimo 4 caracteres" required />
+              <div class="code-row">
+                <input id="cancelCode" name="cancelCode" type="text" minlength="4" readonly required />
+                <button type="button" class="secondary-button" id="newCancelCode">Gerar</button>
+              </div>
             </label>
             <p class="form-message" id="formMessage" role="status" aria-live="polite"></p>
             <button type="submit" class="primary-button">Agendar sala</button>
