@@ -182,25 +182,77 @@ function render() {
   updateRoomStatus();
 }
 
+const HOUR_HEIGHT = 50;
+
 function renderWeek() {
   const start = startOfWeek(state.cursor);
   const days = Array.from({ length: 7 }, (_, index) => addDays(start, index));
   periodTitle.textContent = `${formatDate(days[0], "short")} - ${formatDate(days[6], "short")}`;
   periodSubtitle.textContent = "Visao semanal";
   calendar.innerHTML = "";
-  const grid = create("div", "week-grid");
 
+  const scroll = create("div", "tg-scroll");
+  const grid = create("div", "tg-grid");
+
+  grid.append(create("div", "tg-corner"));
   days.forEach((day) => {
-    const column = create("section", "day-column");
-    column.append(dayHeader(day));
-    const body = create("div", "day-body");
-    bookingsForDate(day).forEach((booking) => body.append(bookingCard(booking, true)));
-    if (!body.children.length) body.append(emptyState("Sem reservas"));
-    column.append(body);
-    grid.append(column);
+    const head = create("div", "tg-dayhead");
+    const strong = create("strong");
+    strong.textContent = day.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "");
+    const span = create("span");
+    span.textContent = day.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    head.append(strong, span);
+    grid.append(head);
   });
 
-  calendar.append(grid);
+  const gutter = create("div", "tg-gutter");
+  gutter.style.height = `${24 * HOUR_HEIGHT}px`;
+  for (let hour = 0; hour < 24; hour += 1) {
+    const label = create("div", "tg-hourlabel");
+    label.style.top = `${hour * HOUR_HEIGHT}px`;
+    label.textContent = `${String(hour).padStart(2, "0")}:00`;
+    gutter.append(label);
+  }
+  grid.append(gutter);
+
+  days.forEach((day) => {
+    const col = create("div", "tg-col");
+    col.style.height = `${24 * HOUR_HEIGHT}px`;
+    bookingsForDate(day).forEach((booking) => {
+      const startDate = new Date(booking.start);
+      const endDate = new Date(booking.end);
+      const startMin = startDate.getHours() * 60 + startDate.getMinutes();
+      let endMin = endDate.getHours() * 60 + endDate.getMinutes();
+      if (endMin <= startMin) endMin = startMin + 30;
+      const event = eventCard(booking);
+      event.style.top = `${(startMin / 60) * HOUR_HEIGHT}px`;
+      event.style.height = `${Math.max(24, ((endMin - startMin) / 60) * HOUR_HEIGHT)}px`;
+      col.append(event);
+    });
+    grid.append(col);
+  });
+
+  scroll.append(grid);
+  calendar.append(scroll);
+  scroll.scrollTop = 7 * HOUR_HEIGHT;
+}
+
+function eventCard(booking) {
+  const card = create("article", "tg-event");
+  const title = create("strong");
+  title.textContent = booking.reason;
+  const info = create("span");
+  info.textContent = `${formatTime(booking.start)} – ${formatTime(booking.end)} · ${booking.owner}`;
+  card.append(title, info);
+  if (!String(booking.id).startsWith("sample-")) {
+    const cancel = create("button", "tg-cancel");
+    cancel.type = "button";
+    cancel.dataset.delete = booking.id;
+    cancel.setAttribute("aria-label", "Cancelar reserva");
+    cancel.textContent = "×";
+    card.append(cancel);
+  }
+  return card;
 }
 
 function renderMonth() {
