@@ -757,3 +757,8 @@ input:focus {
 .cancel-choices button {
   width: 100%;
 }
+
+.primary-button:disabled {
+  opacity: 0.72;
+  cursor: default;
+}

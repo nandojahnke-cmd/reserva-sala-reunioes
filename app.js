@@ -45,6 +45,7 @@ const cancelModalText = document.getElementById("cancelModalText");
 const cancelOneBtn = document.getElementById("cancelOneBtn");
 const cancelAllBtn = document.getElementById("cancelAllBtn");
 const cancelBackBtn = document.getElementById("cancelBackBtn");
+const submitButton = form.querySelector('button[type="submit"]');
 let lastRecurrenceValue = "none";
 let pendingCancel = null;
 
@@ -126,6 +127,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  setBusy(true, "Criando...");
   try {
     const created = await createBooking({
       owner: data.owner.trim(),
@@ -138,10 +140,12 @@ form.addEventListener("submit", async (event) => {
     });
     rememberCancelCode(created.id, cancelCode);
   } catch (error) {
+    setBusy(false);
     showMessage(`Nao foi possivel salvar: ${cleanError(error.message)}`);
     return;
   }
 
+  setBusy(false);
   resetBookingForm(data);
   showMessage(`Reserva criada. Guarde o codigo: ${cancelCode}`, true);
   await refreshBookings();
@@ -719,9 +723,11 @@ async function createRecurringBookings(data, cancelCode) {
     return;
   }
 
-  const seriesId = occurrences.length > 1 ? makeUuid() : null;
+  const total = occurrences.length;
+  const seriesId = total > 1 ? makeUuid() : null;
   let created = 0;
   const failed = [];
+  setBusy(true, `Criando... (0/${total})`);
   for (const dateStr of occurrences) {
     const start = new Date(`${dateStr}T${data.startTime}`);
     const end = new Date(`${dateStr}T${data.endTime}`);
@@ -741,7 +747,9 @@ async function createRecurringBookings(data, cancelCode) {
     } catch (error) {
       failed.push(dateStr);
     }
+    setBusy(true, `Criando... (${created + failed.length}/${total})`);
   }
+  setBusy(false);
 
   resetBookingForm(data);
   if (created === 0) {
@@ -817,6 +825,11 @@ function resetBookingForm(data) {
   state.recurrence = null;
   lastRecurrenceValue = "none";
   recurrenceSelect.value = "none";
+}
+
+function setBusy(isBusy, label) {
+  submitButton.disabled = isBusy;
+  submitButton.textContent = isBusy ? label || "Criando..." : "Agendar sala";
 }
 
 function dateValue() {
